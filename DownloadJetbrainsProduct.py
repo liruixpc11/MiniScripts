@@ -12,7 +12,7 @@ products = [
     ('PhpStorm', 'webide', '8.0.3'),
     ('pycharm-professional', 'python', '4.5.1'),
     ('pycharm-community', 'python', '4.5.1'),
-    ('WebStorm', 'webstorm', '11'),
+    ('WebStorm', 'webstorm', '10'),
 ]
 extensions = [
     '.dmg',

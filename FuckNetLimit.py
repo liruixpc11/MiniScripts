@@ -5,7 +5,7 @@ import sys
 import socket
 import os
 import urllib2
-
+import platform
 
 IP_PREFIX = "10.104.171."
 digits_history = {1, 2, 255}
@@ -17,12 +17,21 @@ def detect_blocked():
 
 
 def detect_used_ip():
-    for line in os.popen('nmap -sn 10.104.171.0/24').readlines():
+    for line in os.popen('nmap -PR -sn -n 10.104.171.0/24').readlines():
         if not line.strip().startswith('Nmap'):
             continue
         ip = line.split()[4]
         if ip[0].isdigit():
             yield ip
+
+
+def detect_available_ip_list():
+    used_digits = set([int(ip.split('.')[3]) for ip in detect_used_ip()])
+    available_digits = set(range(1, 255)) - used_digits - digits_history
+    if not len(available_digits):
+        return []
+
+    return map(lambda x: IP_PREFIX + str(x), sorted(list(available_digits)))
 
 
 def detect_available_ip():
@@ -38,7 +47,12 @@ def detect_available_ip():
 
 
 def change_ip(ip):
-    os.popen('networksetup -setmanual "Ethernet 2" {0} 255.255.255.0 10.104.171.1'.format(ip)).read()
+    os_name = platform.system().lower()
+    if os_name == 'darwin':
+        os.popen('networksetup -setmanual "USB 10/100/1000 LAN" {0} 255.255.255.0 10.104.171.1'.format(ip)).read()
+    elif os_name == 'linux':
+        os.popen('ifconfig eth0 {0}/24'.format(ip)).read()
+        os.popen('route add default gw 10.104.171.1'.format(ip)).read()
 
 
 def main():
@@ -78,4 +92,18 @@ def main():
 
 if __name__ == '__main__':
     socket.setdefaulttimeout(20)
-    main()
+    #main()
+    import sys
+    from pprint import pprint
+    ip_list = detect_available_ip_list()
+    if len(sys.argv) == 2:
+        index = int(sys.argv[1])
+    else:
+        for i, ip in enumerate(ip_list):
+            print "{0}: {1}".format(i, ip)
+        index = raw_input("index of IP to set:")
+        index = int(index)
+
+    ip = ip_list[index]
+    print 'change ip to', ip
+    change_ip(ip)
