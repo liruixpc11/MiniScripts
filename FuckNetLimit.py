@@ -1,15 +1,49 @@
 #!/usr/bin/python
 # coding=utf-8
+
 import time
 import sys
 import socket
 import os
+import codecs
 import urllib2
+import locale
 import platform
+import subprocess
+from ConfigParser import ConfigParser
 
 IP_PREFIX = "10.104.171."
 digits_history = {1, 2, 255}
-last_available_ip = None
+last_available_ip = []
+os_name = platform.system().lower()
+CONFIG_PATH = os.path.normpath(os.path.expanduser("~/.fn.conf"))
+OS_WINDOWS = 'windows'
+OS_MAC = 'darwin'
+OS_LINUX = 'linux'
+
+
+def get_default_nic_name():
+    if os_name == OS_MAC:
+        return u"USB 10/100/1000 LAN"
+    elif os_name == OS_LINUX:
+        return u'eth0'
+    elif os_name == OS_WINDOWS:
+        return u'本地连接'
+    else:
+        raise Exception('platform {} not support'.format(os_name))
+
+
+def load_nic_name():
+    if not os.path.isfile(CONFIG_PATH):
+        with open(CONFIG_PATH, 'w') as f:
+            f.write(u'''[root]
+nic_name={}
+'''.format(get_default_nic_name()).encode('utf-8'))
+
+    parser = ConfigParser()
+    with codecs.open(CONFIG_PATH, 'r', 'utf-8') as f:
+        parser.readfp(f, CONFIG_PATH)
+    return parser.get('root', 'nic_name')
 
 
 def detect_blocked():
@@ -46,13 +80,22 @@ def detect_available_ip():
     return IP_PREFIX + str(digit)
 
 
+def load_config_string():
+    if os_name == OS_MAC:
+        return u'networksetup -setmanual {0} {1} 255.255.255.0 10.104.171.1'
+    elif os_name == OS_LINUX:
+        return u'ifconfig {0} {1}/24\nroute add default 10.104.171.1'
+    elif os_name == OS_WINDOWS:
+        return u'netsh -c interface ip set address "{0}" static addr={1} mask=255.255.255.0 gateway=10.104.171.1'
+    else:
+        raise Exception('platform {} not support'.format(os_name))
+
 def change_ip(ip):
-    os_name = platform.system().lower()
-    if os_name == 'darwin':
-        os.popen('networksetup -setmanual "USB 10/100/1000 LAN" {0} 255.255.255.0 10.104.171.1'.format(ip)).read()
-    elif os_name == 'linux':
-        os.popen('ifconfig eth0 {0}/24'.format(ip)).read()
-        os.popen('route add default gw 10.104.171.1'.format(ip)).read()
+    nic_name = load_nic_name()
+    config_string = load_config_string()
+    commands = config_string.format(nic_name, ip).encode(locale.getpreferredencoding()).split('\n')
+    for command in commands:
+        subprocess.check_call(command)
 
 
 def main():
@@ -87,14 +130,13 @@ def main():
                     change_ip(ip)
                     error_count = 0
             else:
-                print >>sys.stderr, ex
+                print >> sys.stderr, ex
 
 
 if __name__ == '__main__':
     socket.setdefaulttimeout(20)
-    #main()
-    import sys
-    from pprint import pprint
+    # main()
+
     ip_list = detect_available_ip_list()
     if len(sys.argv) == 2:
         index = int(sys.argv[1])
