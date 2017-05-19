@@ -90,6 +90,7 @@ def load_config_string():
     else:
         raise Exception('platform {} not support'.format(os_name))
 
+
 def change_ip(ip):
     nic_name = load_nic_name()
     config_string = load_config_string()
