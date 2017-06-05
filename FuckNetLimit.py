@@ -12,7 +12,7 @@ import platform
 import subprocess
 from ConfigParser import ConfigParser
 
-IP_PREFIX = "10.104.171."
+IP_PREFIX = "10.114.2."
 digits_history = {1, 2, 255}
 last_available_ip = []
 os_name = platform.system().lower()
@@ -51,7 +51,7 @@ def detect_blocked():
 
 
 def detect_used_ip():
-    for line in os.popen('nmap -PR -sn -n 10.104.171.0/24').readlines():
+    for line in os.popen('nmap -PR -sn -n {0}0/24'.format(IP_PREFIX)).readlines():
         if not line.strip().startswith('Nmap'):
             continue
         ip = line.split()[4]
@@ -82,11 +82,11 @@ def detect_available_ip():
 
 def load_config_string():
     if os_name == OS_MAC:
-        return u'networksetup -setmanual {0} {1} 255.255.255.0 10.104.171.1'
+        return u'networksetup -setmanual {0} {1} 255.255.255.0 ' + IP_PREFIX + '1'
     elif os_name == OS_LINUX:
-        return u'ifconfig {0} {1}/24\nroute add default 10.104.171.1'
+        return u'ifconfig {0} {1}/24\nroute add default ' + IP_PREFIX + '1'
     elif os_name == OS_WINDOWS:
-        return u'netsh -c interface ip set address "{0}" static addr={1} mask=255.255.255.0 gateway=10.104.171.1'
+        return u'netsh -c interface ip set address "{0}" static addr={1} mask=255.255.255.0 gateway=' + IP_PREFIX + '1'
     else:
         raise Exception('platform {} not support'.format(os_name))
 
