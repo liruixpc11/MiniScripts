@@ -6,10 +6,10 @@ sudo apt install -y build-essential git curl wget
 
 # install oh-my-zsh
 sudo apt install -y zsh
-sh -c "$(curl -fsSL https://raw.githubusercontent.com/robbyrussell/oh-my-zsh/master/tools/install.sh)"
+sh ./install-oh-my-zsh.sh
 export ZSH_CUSTOM=~/.oh-my-zsh/custom
-git clone git://github.com/zsh-users/zsh-autosuggestions $ZSH_CUSTOM/plugins/zsh-autosuggestions
-git clone https://github.com/zsh-users/zsh-syntax-highlighting.git ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-syntax-highlighting
+git clone https://gitee.com/mirror-github/zsh-autosuggestions.git $ZSH_CUSTOM/plugins/zsh-autosuggestions
+git clone https://gitee.com/mirror-github/zsh-syntax-highlighting.git ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-syntax-highlighting
 sed -i 's/^ZSH_THEME=.*/ZSH_THEME="ys"/g' ~/.zshrc
 sed -i 's/^plugins=.*/plugins=\(git zsh-autosuggestions zsh-syntax-highlighting\)/g' ~/.zshrc
 
@@ -32,7 +32,7 @@ EOF
 echo >>~/.zshrc "export JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64"
 
 # install Python
-sudo apt install -y python python-pip python-dev
+sudo apt install -y python3 python3-pip python3-dev
 mkdir ~/.pip
 cat >~/.pip/pip.conf <<EOF
 [global]
@@ -44,7 +44,8 @@ EOF
 
 # install vim
 sudo apt install -y vim
-mkdir -p ~/.vim/autoload ~/.vim/bundle && curl -LSso ~/.vim/autoload/pathogen.vim https://tpo.pe/pathogen.vim
+mkdir -p ~/.vim/autoload ~/.vim/bundle
+cp ./pathogen.vim ~/.vim/autoload/pathogen.vim
 cat >~/.vimrc <<EOF
 set tabstop=4
 set softtabstop=4
